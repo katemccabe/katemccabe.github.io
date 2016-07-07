@@ -138,8 +138,6 @@ _.each = function (collection, action) {
   }
 };
 
-
-
 /** _.indexOf()
 * Arguments:
 *   1) An array
@@ -290,11 +288,12 @@ _.unique = function(array) {
 *   _.map([1,2,3,4], function(e){return e * 2}) -> [2,4,6,8]
 */
 
-_.map = function(collection, action) {
-  var arrayOutput = [];
-  _.each(collection, function(element, i, array, value) {
-    arrayOutput.push(value * element[i]);
+_.map = function(collection, transform) {
+  var output = [];
+  _.each(collection, function(value, position, collection) {
+    output.push(transform(value, position, collection));
   });
+  return output;
 };
 
 /** _.pluck()
@@ -307,6 +306,14 @@ _.map = function(collection, action) {
 * Examples:
 *   _.pluck([{a: "one"}, {a: "two"}], "a") -> ["one", "two"]
 */
+
+_.pluck = function(array, property) {
+  var output = [];
+  _.map(array, function(object) {
+    output.push(object[property]);
+  });
+  return output;
+};
 
 
 /** _.contains()
@@ -324,6 +331,11 @@ _.map = function(collection, action) {
 *   _.contains([1,"two", 3.14], "two") -> true
 */
 
+_.contains = function(collection, value) {
+  return _.reduce(collection, function(match, noMatch){
+    return match ? true : noMatch === value;
+  }, false);
+};
 
 /** _.every()
 * Arguments:
@@ -345,6 +357,24 @@ _.map = function(collection, action) {
 *   _.every([2,4,6], function(e){return e % 2 === 0}) -> true
 *   _.every([1,2,3], function(e){return e % 2 === 0}) -> false
 */
+
+_.every = function(collection, test) {
+    test = test || _.identity;
+    if(Array.isArray(collection)) {
+      for(var i = 0; i < collection.length; i++) {
+          if(!test(collection[i], i, collection)) {
+            return false;
+          }
+      }
+  } else {
+      for(var key in collection) {
+          if(!test(collection[key], key, collection)) {
+            return false;
+          }
+      }
+  }
+  return true;
+};
 
 
 /** _.some()
@@ -368,6 +398,23 @@ _.map = function(collection, action) {
 *   _.some([1,2,3], function(e){return e % 2 === 0}) -> true
 */
 
+_.some = function(collection, test) {
+    test = test || _.identity;
+    if(Array.isArray(collection)) {
+      for(var i = 0; i < collection.length; i++) {
+          if(test(collection[i], i, collection)) {
+            return true;
+          }
+      }
+  } else {
+      for(var key in collection) {
+          if(test(collection[key], key, collection)) {
+            return true;
+          }
+      }
+  }
+  return false;
+};
 
 /** _.reduce()
 * Arguments:
@@ -388,6 +435,18 @@ _.map = function(collection, action) {
 *   _.reduce([1,2,3], function(prev, curr){ return prev + curr}) -> 6
 */
 
+_.reduce = function(collection, summarize, seed){
+  var summary = seed;
+  if(seed === undefined) {
+    summary = collection[0];
+    //collection = collection.slice(1);
+  }
+  _.each(collection, function(value, position, collection){
+    summary = summarize(summary, value, position, collection);
+  }, {});
+  return summary;
+};
+
 
 /** _.extend()
 * Arguments:
@@ -403,6 +462,15 @@ _.map = function(collection, action) {
 *   _.extend(data, {b:"two"}); -> data now equals {a:"one",b:"two"}
 *   _.extend(data, {a:"two"}); -> data now equals {a:"two"}
 */
+
+_.extend = function(object) {
+  _.each(arguments, function(object2) {
+    _.each(object2, function(value, key, collection){
+      object[key] = value;
+    });
+  });
+  return object;
+};
 
 
 // This is the proper way to end a javascript library
